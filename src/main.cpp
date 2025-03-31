@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <vector>
+#include <thread>
 
 static constexpr uint32_t EVENT_READ = EPOLLIN;
 static constexpr uint32_t EVENT_WRITE = EPOLLOUT;
@@ -334,12 +335,28 @@ CoroutineServer CreateCoroutineServer(const int PORT, const int MAX_EVENTS)
 
 int main(int argc, char **argv)
 {
+    std::thread a([]() -> void
+                  {
     // Server Coroutine
-    CoroutineServer server = CreateCoroutineServer(20023, 100000);
+    CoroutineServer server = CreateCoroutineServer(20030, 1000);
     server.coro_handle.resume();
     if (server.coro_handle.done())
     {
         server.coro_handle.destroy();
-    }
+    } });
+
+    std::thread b([]() -> void
+                  {
+    // Server Coroutine
+    CoroutineServer server = CreateCoroutineServer(20031, 1000);
+    server.coro_handle.resume();
+    if (server.coro_handle.done())
+    {
+        server.coro_handle.destroy();
+    } });
+
+    a.join();
+    b.join();
+
     return 0;
 }
